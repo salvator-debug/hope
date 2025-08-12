@@ -1,56 +1,136 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <title>Редагування результатів</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <title>Редагована таблиця</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { border: 1px solid #000; text-align: center; padding: 6px; }
+        th { background-color: #f0f0f0; }
+
+        /* Стилі для input */
+        input[type="text"], input[type="date"], input[type="number"] {
+            width: 100%;
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-size: 13px;
+        }
+
+        input:focus {
+            outline: 1px solid #007bff;
+            background: #fff;
+        }
+
+        /* Контейнер для input з % */
+        .input-with-percent {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .input-with-percent input {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 13px;
+            padding-right: 0;
+        }
+
+        .percent-sign {
+            margin-left: 4px;
+            font-size: 13px;
+            color: #555;
+            user-select: none;
+            white-space: nowrap;
+        }
+    </style>
 </head>
 <body>
 <div class="container mt-4">
-    <h2>Редагування таблиці</h2>
-    <form method="post" action="/export">
+    <h3 class="mb-4">Редагування таблиці</h3>
+    <form method="post">
         <input type="hidden" name="count" value="{{ results|length }}">
-        <table class="table table-bordered mt-3">
+
+        <table>
             <thead>
                 <tr>
-                    <th>колонка</th>
-                    <th>Послідовність</th>
-                    <th>A %</th>
-                    <th>T %</th>
-                    <th>G %</th>
-                    <th>C %</th>
-                    <th>Тетразол</th>
-                    <th>Ангідрид</th>
-                    <th>NMI</th>
-                    <th>TCA</th>
-                    <th>Йод</th>
-                    <th>Ацетонітрил</th>
-                    <th>Мол. маса</th>
+                    {% for col in columns %}
+                        <th>{{ col }}</th>
+                    {% endfor %}
                 </tr>
             </thead>
             <tbody>
-                {% for r in results %}
+                {% for i in range(results|length) %}
                 <tr>
-                    <td><input type="text" name="seq_num_{{ loop.index0 }}" value="{{ r.seq_num }}" class="form-control"></td>
-                    <td><input type="text" name="sequence_{{ loop.index0 }}" value="{{ r.sequence }}" class="form-control"></td>
-                    <td><input type="text" name="A_{{ loop.index0 }}" value="{{ r.A }}" class="form-control"></td>
-                    <td><input type="text" name="T_{{ loop.index0 }}" value="{{ r.T }}" class="form-control"></td>
-                    <td><input type="text" name="G_{{ loop.index0 }}" value="{{ r.G }}" class="form-control"></td>
-                    <td><input type="text" name="C_{{ loop.index0 }}" value="{{ r.C }}" class="form-control"></td>
-                    <td><input type="text" name="tetrazole_{{ loop.index0 }}" value="{{ r.tetrazole }}" class="form-control"></td>
-                    <td><input type="text" name="anhydride_{{ loop.index0 }}" value="{{ r.anhydride }}" class="form-control"></td>
-                    <td><input type="text" name="nmi_{{ loop.index0 }}" value="{{ r.nmi }}" class="form-control"></td>
-                    <td><input type="text" name="tca_{{ loop.index0 }}" value="{{ r.tca }}" class="form-control"></td>
-                    <td><input type="text" name="iodine_{{ loop.index0 }}" value="{{ r.iodine }}" class="form-control"></td>
-                    <td><input type="text" name="acn_{{ loop.index0 }}" value="{{ r.acn }}" class="form-control"></td>
-                    <td><input type="text" name="summmolarweight_{{ loop.index0 }}" value="{{ r.summmolarweight }}" class="form-control"></td>
+                    {% for col in columns %}
+                    <td>
+                        {% if col == 'Дата' %}
+                            <input type="date" name="{{ col }}_{{ i }}" value="{{ results[i][col] }}">
+                        {% else %}
+                            <div class="input-with-percent">
+                                <input type="text" name="{{ col }}_{{ i }}" value="{{ results[i][col] }}">
+                                <span class="percent-sign">%</span>
+                            </div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-        <button type="submit" class="btn btn-success">Завантажити в Excel</button>
-        <a href="/" class="btn btn-secondary">Повернутись</a>
+
+        <div class="mt-3 d-flex gap-2 align-items-center">
+            <button type="submit" class="btn btn-primary">Зберегти</button>
+            <button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#initialValuesRow" aria-expanded="false" aria-controls="initialValuesRow">редагувати</button>
+        </div>
+
+        <!-- Рядок індивідуальних значень (колапс) -->
+        <div class="collapse mt-3" id="initialValuesRow" style="overflow-x: auto;">
+            <label>попередні залишки для реагента:</label>
+            <div class="d-flex gap-2 flex-nowrap align-items-start">
+                {% for col in columns %}
+                <div style="flex: 0 0 70px;">
+                    <input type="text" class="form-control form-control-sm text-center mb-1"
+                           name="initial_{{ col }}"
+                           placeholder="{{ col }}"
+                           value="{{ initial_row_values.get(col, '') }}">
+                    {% if col == 'Дата' %}
+                        <input type="number" step="any" min="0"
+                               class="form-control form-control-sm text-center"
+                               name="subtract_{{ col }}"
+                               value="{{ subtract_values.get(col, 10) }}">
+                    {% else %}
+                        <div class="input-with-percent">
+                            <input type="number" step="any" min="0"
+                                   class="form-control form-control-sm text-center"
+                                   name="subtract_{{ col }}"
+                                   value="{{ subtract_values.get(col, 10) }}">
+                            <span class="percent-sign">%</span>
+                        </div>
+                    {% endif %}
+                    <small class="text-muted">Відняти</small>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-2">
+                <label for="initial_value">попередні залишки для всіх реагентів:</label>
+                <div class="input-with-percent" style="width: 150px;">
+                    <input type="number" name="initial_value" id="initial_value"
+                           class="form-control text-center"
+                           value="{{ initial_value }}">
+                    <span class="percent-sign">%</span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success mt-2">Застосувати</button>
+        </div>
     </form>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

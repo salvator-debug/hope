@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8" />
+    <title>Аналіз гетеродимерів</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        .system-card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .dna-field {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-4">
+    <h2>Аналіз гетеродимерів</h2>
+
+    <form method="POST" id="mode3-form">
+        <div id="systems-container"></div>
+
+        <button type="submit" class="btn btn-primary mt-3">Обчислити ΔG</button>
+    </form>
+
+    {% if results %}
+    <hr>
+    <h3>Результати обчислення ΔG</h3>
+    {% for res in results %}
+        <div class="card mb-3">
+            <div class="card-header">
+                Система: {{ res.system_name }}
+            </div>
+            <div class="card-body">
+                <p>Найнижча ΔG: {{ res.max_delta_g }} kcal/mol</p>
+                <ul>
+                    {% for seq1, seq2, dg in res.pairs %}
+                    <li><code>{{ seq1 }}</code> &ndash; <code>{{ seq2 }}</code> : ΔG = {{ dg }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endfor %}
+    {% endif %}
+</div>
+
+<script>
+    let systemCount = 0;
+
+    function createSystemElement(index) {
+        const systemDiv = document.createElement('div');
+        systemDiv.classList.add('system-card');
+        systemDiv.dataset.index = index;
+
+        systemDiv.innerHTML = `
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>${index}</strong>
+                    <input name="virus_${index}" type="text" class="form-control mb-2 mt-2" placeholder="Тип вірусу" />
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-success btn-sm" onclick="addSystemAfter(this)">+</button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeSystem(this)">−</button>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="dna-list">
+                        <input name="dna_${index}[]" type="text" class="form-control dna-field" placeholder="Послідовність ДНК" />
+                    </div>
+                    <div class="btn-group mt-2">
+                        <button type="button" class="btn btn-success btn-sm" onclick="addDnaField(this)">+ ДНК</button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeDnaField(this)">− ДНК</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        return systemDiv;
+    }
+
+    function addSystemAfter(button) {
+        systemCount++;
+        const newSystem = createSystemElement(systemCount);
+        const currentSystem = button.closest('.system-card');
+        currentSystem.insertAdjacentElement('afterend', newSystem);
+        updateSystemNumbers();
+    }
+
+    function removeSystem(button) {
+        button.closest('.system-card').remove();
+        updateSystemNumbers();
+    }
+
+    function addDnaField(button) {
+        const dnaList = button.closest('.col-md-9').querySelector('.dna-list');
+        dnaList.insertAdjacentHTML('beforeend', `<input name="dna_${button.closest('.system-card').dataset.index}[]" type="text" class="form-control dna-field" placeholder="Послідовність ДНК" />`);
+    }
+
+    function removeDnaField(button) {
+        const dnaList = button.closest('.col-md-9').querySelector('.dna-list');
+        const fields = dnaList.querySelectorAll('.dna-field');
+        if (fields.length > 1) {
+            fields[fields.length - 1].remove();
+        }
+    }
+
+    function updateSystemNumbers() {
+        const systems = document.querySelectorAll('.system-card');
+        systems.forEach((sys, idx) => {
+            sys.dataset.index = idx + 1;
+            sys.querySelector('strong').textContent = idx + 1;
+            const virusInput = sys.querySelector('input[name^="virus_"]');
+            virusInput.name = `virus_${idx + 1}`;
+
+            const dnaFields = sys.querySelectorAll('.dna-field');
+            dnaFields.forEach(dnaInput => {
+                dnaInput.name = `dna_${idx + 1}[]`;
+            });
+        });
+        systemCount = systems.length;
+    }
+
+    window.onload = () => {
+        systemCount = 1;
+        document.getElementById('systems-container').appendChild(createSystemElement(systemCount));
+    };
+</script>
+</body>
+</html>

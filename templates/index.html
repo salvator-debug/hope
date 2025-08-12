@@ -41,7 +41,10 @@
         <button type="submit" class="btn btn-outline-primary me-2">Режим 1: Синтез</button>
     </form>
     <form method="get" action="/mode2" onsubmit="saveMode1Data()">
-    <button type="submit" class="btn btn-outline-secondary mt-2">Режим 2: Розрахунок</button>
+        <button type="submit" class="btn btn-outline-secondary mt-2">Режим 2: Розрахунок</button>
+    </form>
+    <form method="get" action="/mode3" onsubmit="saveMode1Data()" class="mt-2">
+    <button type="submit" class="btn btn-outline-success">Режим 3: Аналіз гетеродимерів</button>
     </form>
 </div>
 
@@ -52,15 +55,15 @@
 
     <form method="post" class="mb-4">
         <div class="mb-3">
-            <label for="scale" class="form-label">Масштаб синтезу:</label>
-            <select id="scale" name="scale" class="form-select" required>
-                    <option value="" disabled {% if not scale %}selected{% endif %}>Оберіть</option>
-                    <option value="праймер" {% if scale == 'праймер' %}selected{% endif %}>Праймер</option>
-                    <option value="0.2мм" {% if scale == '0.2мм' %}selected{% endif %}>0.2 ммоль</option>
-                    <option value="1мм" {% if scale == '1мм' %}selected{% endif %}>1 ммоль</option>
-                    <option value="10мм" {% if scale == '10мм' %}selected{% endif %}>10 ммоль</option>
-            </select>
-        </div>
+        <label for="scale" class="form-label">Масштаб синтезу:</label>
+    <select id="scale" name="scale" class="form-select" required>
+        <option value="" disabled {% if not scale %}selected{% endif %}>Оберіть</option>
+        <option value="праймер" {% if scale == 'праймер' or not scale %}selected{% endif %}>Праймер</option>
+        <option value="0.2мм" {% if scale == '0.2мм' %}selected{% endif %}>0.2 ммоль</option>
+        <option value="1мм" {% if scale == '1мм' %}selected{% endif %}>1 ммоль</option>
+        <option value="10мм" {% if scale == '10мм' %}selected{% endif %}>10 ммоль</option>
+    </select>
+</div>
 
         <div class="d-flex flex-row gap-3 flex-wrap">
             {% for i in range(1, 5) %}
@@ -134,7 +137,7 @@
             <!-- Кнопка редагування -->
             <form method="post" action="/edit">
                 <input type="hidden" name="results_json" value='{{ results | tojson | safe }}'>
-                <button class="btn btn-warning mt-4">Редагувати результати</button>
+                <button type="submit" formaction="/edit" class="btn btn-primary">Редагувати</button>
             </form>
     </div>
     {% endif %}

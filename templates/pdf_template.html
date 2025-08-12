@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>PDF результати</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        th, td {
+            border: 1px solid #000;
+            text-align: center;
+            padding: 4px;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <h3 style="text-align: center;">Результати ({{ date }})</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>A%</th>
+                <th>T%</th>
+                <th>G%</th>
+                <th>C%</th>
+                <th>Тетразол</th>
+                <th>Ангідрид</th>
+                <th>NMI</th>
+                <th>TCA</th>
+                <th>Ацетонітрил</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in data %}
+            <tr>
+                <td>{{ r['A %'] }}</td>
+                <td>{{ r['T %'] }}</td>
+                <td>{{ r['G %'] }}</td>
+                <td>{{ r['C %'] }}</td>
+                <td>{{ r['Тетразол (мл)'] }}</td>
+                <td>{{ r['Кислотний ангідрид (мл)'] }}</td>
+                <td>{{ r['NMI (мл)'] }}</td>
+                <td>{{ r['TCA (мл)'] }}</td>
+                <td>{{ r['Ацетонітрил (мл)'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
