@@ -19,7 +19,24 @@ from reportlab.lib import colors
 app = Flask(__name__)
 
 def calculate_reagents(summA, summT, summG, summC, summ, scale):
-    if scale == '10мм':
+    if scale == '10нм':
+        resA = round(summA * 100 / 280, 2)
+        resT = round(summT * 100 / 280, 2)
+        resG = round(summG * 100 / 280, 2)
+        resC = round(summC * 100 / 280, 2)
+        tetrazole = round(summ * 180 / 1000, 2)
+        tetrazole_percent = round(100 * tetrazole / 180, 2)
+        anhydride = round(summ * 180 / 1000, 2)
+        anhydride_percent = round(100 * anhydride / 180, 2)
+        nmi = round(summ * 180 / 1000, 2)
+        nmi_percent = round(100 * nmi / 180, 2)
+        tca = round(summ * 450 / 550, 2)
+        tca_percent = round(100 * tca / 450, 2)
+        iodine = round(summ * 200 / 800, 2)
+        iodine_percent = round(100 * iodine / 200, 2)
+        acn = round(summ * 5000 / 800, 2)
+        acn_percent = round(100 * acn / 5000, 2)
+    elif scale == '10мм':
         resA = round(summA * 100 / 19, 2)
         resT = round(summT * 100 / 26, 2)
         resG = round(summG * 100 / 20, 2)
@@ -130,6 +147,7 @@ def index():
         for i in range(1, 5):
             if request.form.get(f'use_seq{i}'):
                 seq_raw = request.form.get(f'sequence{i}', '').upper().replace(" ", "").replace("\n", "")
+                seq_raw = seq_raw.replace('6', 'T')  # <-- додаємо цю строку
                 summA = seq_raw.count('A')
                 summT = seq_raw.count('T')
                 summG = seq_raw.count('G')
@@ -187,16 +205,6 @@ def index():
             total[key] = round(total[key], 2)
 
     return render_template('index.html', results=results, total=total)
-
-
-
-
-
-
-
-
-
-
 
 # ___________________________________________________________________________________________________________
 

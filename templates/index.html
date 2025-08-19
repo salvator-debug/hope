@@ -4,36 +4,22 @@
     <meta charset="UTF-8">
     <title>Розрахунок реагентів</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .sequence-input {
+            min-height: 40px;
+            width: 220px; /* фіксована ширина */
+            resize: vertical;
+            overflow-y: auto;
+        }
+        .sequence-box {
+            border: 1px solid #ccc;
+            padding: 8px;
+            border-radius: 5px;
+            min-width: 220px;
+            font-size: 0.85rem;
+        }
+    </style>
 </head>
-<script>
-    // Зберігання даних у sessionStorage перед перемиканням
-    function saveMode1Data() {
-        sessionStorage.setItem('scale', document.getElementById('scale').value);
-
-        for (let i = 1; i <= 4; i++) {
-            sessionStorage.setItem(`use_seq${i}`, document.getElementById(`use_seq${i}`).checked);
-            sessionStorage.setItem(`sequence${i}`, document.getElementById(`sequence${i}`).value);
-        }
-    }
-
-    // Відновлення даних при завантаженні
-    function restoreMode1Data() {
-        const savedScale = sessionStorage.getItem('scale');
-        if (savedScale) {
-            document.getElementById('scale').value = savedScale;
-        }
-
-        for (let i = 1; i <= 4; i++) {
-            const use = sessionStorage.getItem(`use_seq${i}`) === 'true';
-            const seq = sessionStorage.getItem(`sequence${i}`) || '';
-            document.getElementById(`use_seq${i}`).checked = use;
-            document.getElementById(`sequence${i}`).value = seq;
-            toggleLabel(i);
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', restoreMode1Data);
-</script>
 <body>
 <div class="container mt-4">
     <h1 class="mb-4">Режими</h1>
@@ -44,7 +30,7 @@
         <button type="submit" class="btn btn-outline-secondary mt-2">Режим 2: Розрахунок</button>
     </form>
     <form method="get" action="/mode3" onsubmit="saveMode1Data()" class="mt-2">
-    <button type="submit" class="btn btn-outline-success">Режим 3: Аналіз гетеродимерів</button>
+        <button type="submit" class="btn btn-outline-success">Режим 3: Аналіз гетеродимерів</button>
     </form>
 </div>
 
@@ -55,25 +41,26 @@
 
     <form method="post" class="mb-4">
         <div class="mb-3">
-        <label for="scale" class="form-label">Масштаб синтезу:</label>
-    <select id="scale" name="scale" class="form-select" required>
-        <option value="" disabled {% if not scale %}selected{% endif %}>Оберіть</option>
-        <option value="праймер" {% if scale == 'праймер' or not scale %}selected{% endif %}>Праймер</option>
-        <option value="0.2мм" {% if scale == '0.2мм' %}selected{% endif %}>0.2 ммоль</option>
-        <option value="1мм" {% if scale == '1мм' %}selected{% endif %}>1 ммоль</option>
-        <option value="10мм" {% if scale == '10мм' %}selected{% endif %}>10 ммоль</option>
-    </select>
-</div>
+            <label for="scale" class="form-label">Масштаб синтезу:</label>
+            <select id="scale" name="scale" class="form-select" required>
+                <option value="" disabled {% if not scale %}selected{% endif %}>Оберіть</option>
+                <option value="праймер" {% if scale == '10нм' or not scale %}selected{% endif %}>10нм</option>
+                <option value="праймер" {% if scale == 'праймер' or not scale %}selected{% endif %}>Праймер</option>
+                <option value="0.2мм" {% if scale == '0.2мм' %}selected{% endif %}>0.2 ммоль</option>
+                <option value="1мм" {% if scale == '1мм' %}selected{% endif %}>1 ммоль</option>
+                <option value="10мм" {% if scale == '10мм' %}selected{% endif %}>10 ммоль</option>
+            </select>
+        </div>
 
         <div class="d-flex flex-row gap-3 flex-wrap">
             {% for i in range(1, 5) %}
-            <div class="border p-2 rounded" style="min-width: 220px; font-size: 0.85rem;">
+            <div class="sequence-box">
                 <div class="form-check form-switch mb-1">
                     <input class="form-check-input" type="checkbox" id="use_seq{{ i }}" name="use_seq{{ i }}" onchange="toggleLabel({{ i }})">
                     <label class="form-check-label" for="use_seq{{ i }}">Колонка {{ i }}</label>
                 </div>
                 <div id="statusLabel{{ i }}" class="mb-1 text-muted">Колонка неактивна</div>
-                <input type="text" name="sequence{{ i }}" class="form-control" id="sequence{{ i }}" placeholder="Послідовність {{ i }}" onclick="toggleDirection({{ i }})">
+                <textarea name="sequence{{ i }}" class="form-control sequence-input" id="sequence{{ i }}" placeholder="Послідовність {{ i }}" onclick="toggleDirection({{ i }})" oninput="activateOnInput({{ i }})"></textarea>
             </div>
             {% endfor %}
         </div>
@@ -134,16 +121,38 @@
             </ul>
         </div>
 
-            <!-- Кнопка редагування -->
-            <form method="post" action="/edit">
-                <input type="hidden" name="results_json" value='{{ results | tojson | safe }}'>
-                <button type="submit" formaction="/edit" class="btn btn-primary">Редагувати</button>
-            </form>
+        <form method="post" action="/edit">
+            <input type="hidden" name="results_json" value='{{ results | tojson | safe }}'>
+            <button type="submit" formaction="/edit" class="btn btn-primary">Редагувати</button>
+        </form>
     </div>
     {% endif %}
 </div>
 
 <script>
+    function saveMode1Data() {
+        sessionStorage.setItem('scale', document.getElementById('scale').value);
+        for (let i = 1; i <= 4; i++) {
+            sessionStorage.setItem(`use_seq${i}`, document.getElementById(`use_seq${i}`).checked);
+            sessionStorage.setItem(`sequence${i}`, document.getElementById(`sequence${i}`).value);
+        }
+    }
+
+    function restoreMode1Data() {
+        const savedScale = sessionStorage.getItem('scale');
+        if (savedScale) document.getElementById('scale').value = savedScale;
+        for (let i = 1; i <= 4; i++) {
+            const use = sessionStorage.getItem(`use_seq${i}`) === 'true';
+            const seq = sessionStorage.getItem(`sequence${i}`) || '';
+            document.getElementById(`use_seq${i}`).checked = use;
+            document.getElementById(`sequence${i}`).value = seq;
+            toggleLabel(i);
+            adjustHeight(document.getElementById(`sequence${i}`));
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', restoreMode1Data);
+
     const originalSequences = {};
 
     function toggleLabel(i) {
@@ -152,22 +161,41 @@
         label.textContent = checkbox.checked ? "Колонка активна" : "Колонка неактивна";
     }
 
+    function activateOnInput(i) {
+        const checkbox = document.getElementById(`use_seq${i}`);
+        const label = document.getElementById(`statusLabel${i}`);
+        if (!checkbox.checked) {
+            checkbox.checked = true;
+            label.textContent = "Колонка активна";
+        }
+    }
+
     function splitIntoTriplets(sequence) {
-        return sequence.match(/.{1,3}/g).join('-');
+        let seq = sequence.replace(/T/g, '6').replace(/G/g, 'g');
+        return seq.match(/.{1,3}/g).join('-');
+    }
+
+    function adjustHeight(el) {
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
     }
 
     function toggleDirection(i) {
         const input = document.getElementById(`sequence${i}`);
-        const current = input.value;
+        const defaultWidth = '220px';
 
         if (originalSequences[i]) {
             input.value = originalSequences[i];
             delete originalSequences[i];
+            input.style.width = defaultWidth;
+            adjustHeight(input);
         } else {
-            originalSequences[i] = current;
-            const cleaned = current.replace(/5'-|-'?3'|[\s-]/g, '');
+            originalSequences[i] = input.value;
+            const cleaned = input.value.replace(/5'-|-'?3'|[\s-]/g, '');
             const tripleted = splitIntoTriplets(cleaned);
             input.value = `5'-${tripleted}-3'`;
+            input.style.width = defaultWidth;
+            adjustHeight(input);
         }
     }
 </script>
